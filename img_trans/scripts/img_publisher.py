@@ -1,4 +1,5 @@
 import rospy
+from rospy.timer import Rate
 from sensor_msgs.msg import Image
 import cv2
 import numpy as np
@@ -18,26 +19,29 @@ file_list.sort()
 file_list = list(map(str, file_list))
 # print(file_list)
 # sys.exit()
-PubEnable = True
+
 def ImagePub():
-    global PubEnable
+    TempRate = int(read_config()['Rate'])
+    PubEnable = True
     rospy.init_node('img_publisher', anonymous=True)
     # rospy.init_node('pub_enable_subscriber', anonymous=True)
     img_pub = rospy.Publisher('image', Image, queue_size=2)
     # rospy.Subscriber('pub_enable',bool,PubEnable_Callback)
-    rate = rospy.Rate(30) #Chane Frequence
+    rate = rospy.Rate(int(read_config()['Rate'])) #Chane Frequence
     bridge = CvBridge()
     count = 0
     while ((not rospy.is_shutdown()) and (PubEnable)):
         Content = read_config()
         # print(Content)
+        if(int(Content['Rate']) != TempRate):
+            print('Switching To',Content['Rate'],'Hz')
+        TempRate = int(Content['Rate'])
+        rate = rospy.Rate(TempRate)
         PubEnable = ((Content['Enable'] == str(True)) or (Content['Enable'] == "true"))
         ImgSize = list(map(int,Content['Image Size'].split()))
         # print(ImgSize)
         # print(type(Content['Enable']))
         # print(PubEnable)
-
-
         for i in file_list:
             img = read_images(i,ImgSize)
             msg = bridge.cv2_to_imgmsg(img, encoding="bgr8")
@@ -50,7 +54,7 @@ def read_images(i,ImgSize):
     # print(i)
     # cv2.imshow('image',img)
     return img
-
+    
 def read_config():
     with open('./Config/Config.json') as json_file:
         config = json.load(json_file)['Publisher']

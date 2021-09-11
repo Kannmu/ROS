@@ -1,6 +1,7 @@
 {
     "Publisher":{
         "Enable":  "True",
-        "Image Size": "512 512"
+        "Image Size": "512 512",
+        "Rate": "10"
     }
 }
